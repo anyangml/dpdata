@@ -479,7 +479,7 @@ class TestMixedSystemWithFparamAparam(
             DataType(
                 "aparam",
                 np.ndarray,
-                shape=(Axis.NFRAMES, Axis.NATOMS, 2),
+                shape=(Axis.NFRAMES, Axis.NATOMS, 3),
                 required=False,
             ),
         ]
