@@ -58,10 +58,10 @@ def to_system_data(folder, type_map=None, labels=True):
         all_cells_concat = all_cells_concat[rest_idx]
         temp_data["coords"] = all_coords_concat[temp_idx]
         all_coords_concat = all_coords_concat[rest_idx]
-        if all_fparam_concat:
+        if all_fparam_concat is not None:
             temp_data["fparam"] = all_fparam_concat[temp_idx]
             all_fparam_concat = all_fparam_concat[rest_idx]
-        if all_aparam_concat:
+        if all_aparam_concat is not None:
             temp_data["aparam"] = all_aparam_concat[temp_idx]
             all_aparam_concat = all_aparam_concat[rest_idx]
         if labels:
