@@ -522,9 +522,19 @@ class TestMixedSystemWithFparamAparam(
                 os.path.exists(os.path.join(i, "real_atom_types.npy")), True
             )
 
-        self.system_names = ["C1H4A0B0D0", "C1H3A0B0D0", "C1H1A1B2D0"]
-        self.system_sizes = {"C1H4A0B0D0": 1, "C1H3A0B0D0": 1, "C1H1A1B2D0": 1}
-        self.atom_names = ["C", "H", "A", "B", "D"]
+        
+        self.system_names = [
+            "C1H4A0B0",
+            "C1H3A0B0",
+            "C1H1A1B2"
+        ]
+        self.system_sizes = {
+            "C1H4A0B0": 1,
+            "C1H3A0B0": 1,
+            "C1H1A1B2": 1
+        }
+        self.atom_names = ["C", "H", "A", "B"]
+
 
     def tearDown(self):
         if os.path.exists("tmp.deepmd.fparam.aparam"):
