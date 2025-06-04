@@ -487,7 +487,7 @@ class TestMixedSystemWithFparamAparam(
         tmp_data_2["fparam"] = np.random.random([nframes_2, 2])
         tmp_data_2["aparam"] = np.random.random([nframes_2, natoms_2, 3])
         system_2_with_params = dpdata.LabeledSystem(data=tmp_data_2)
-        
+
         tmp_data_3 = system_1.data.copy()
         nframes_3 = tmp_data_3["coords"].shape[0]
         tmp_data_3["atom_numbs"] = [1, 1, 1, 2]
@@ -498,42 +498,38 @@ class TestMixedSystemWithFparamAparam(
         tmp_data_3["aparam"] = np.random.random([nframes_3, natoms_3, 3])
         # C1H1A1B2 with params
         system_3_with_params = dpdata.LabeledSystem(data=tmp_data_3)
-        
+
         self.ms = dpdata.MultiSystems(
             system_1_with_params, system_2_with_params, system_3_with_params
         )
-        
+
         self.ms.to_deepmd_npy_mixed("tmp.deepmd.fparam.aparam")
         self.place_holder_ms = dpdata.MultiSystems()
-        self.place_holder_ms.from_deepmd_npy("tmp.deepmd.fparam.aparam", fmt="deepmd/npy")
+        self.place_holder_ms.from_deepmd_npy(
+            "tmp.deepmd.fparam.aparam", fmt="deepmd/npy"
+        )
         self.systems = dpdata.MultiSystems()
-        self.systems.from_deepmd_npy_mixed("tmp.deepmd.fparam.aparam", fmt="deepmd/npy/mixed")
-        
+        self.systems.from_deepmd_npy_mixed(
+            "tmp.deepmd.fparam.aparam", fmt="deepmd/npy/mixed"
+        )
+
         self.ms_1 = self.ms
         self.ms_2 = self.systems
-        
+
         mixed_sets = glob("tmp.deepmd.fparam.aparam/*/set.*")
         for i in mixed_sets:
             self.assertEqual(
                 os.path.exists(os.path.join(i, "real_atom_types.npy")), True
             )
-        
-        self.system_names = [
-            "C1H4A0B0D0",
-            "C1H3A0B0D0",
-            "C1H1A1B2D0"
-        ]
-        self.system_sizes = {
-            "C1H4A0B0D0": 1,
-            "C1H3A0B0D0": 1,
-            "C1H1A1B2D0": 1
-        }
+
+        self.system_names = ["C1H4A0B0D0", "C1H3A0B0D0", "C1H1A1B2D0"]
+        self.system_sizes = {"C1H4A0B0D0": 1, "C1H3A0B0D0": 1, "C1H1A1B2D0": 1}
         self.atom_names = ["C", "H", "A", "B", "D"]
 
     def tearDown(self):
         if os.path.exists("tmp.deepmd.fparam.aparam"):
             shutil.rmtree("tmp.deepmd.fparam.aparam")
-            
+
     def test_len(self):
         self.assertEqual(len(self.ms), 3)
         self.assertEqual(len(self.systems), 3)
@@ -547,14 +543,14 @@ class TestMixedSystemWithFparamAparam(
         self.assertEqual(
             str(self.systems), "MultiSystems (3 systems containing 3 frames)"
         )
-        
+
     def test_fparam_exists(self):
         for formula in self.system_names:
             if formula in self.ms.systems:
                 self.assertTrue("fparam" in self.ms[formula].data)
             if formula in self.systems.systems:
                 self.assertTrue("fparam" in self.systems[formula].data)
-                
+
         for formula in self.system_names:
             if formula in self.ms.systems and formula in self.systems.systems:
                 np.testing.assert_almost_equal(
@@ -569,7 +565,7 @@ class TestMixedSystemWithFparamAparam(
                 self.assertTrue("aparam" in self.ms[formula].data)
             if formula in self.systems.systems:
                 self.assertTrue("aparam" in self.systems[formula].data)
-                
+
         for formula in self.system_names:
             if formula in self.ms.systems and formula in self.systems.systems:
                 np.testing.assert_almost_equal(
