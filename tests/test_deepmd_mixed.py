@@ -5,11 +5,6 @@ import shutil
 import unittest
 from glob import glob
 
-from dpdata.data_type import (
-    Axis,
-    DataType,
-)
-
 import numpy as np
 from comp_sys import (
     CompLabeledMultiSys,
@@ -19,6 +14,11 @@ from comp_sys import (
     MultiSystems,
 )
 from context import dpdata
+
+from dpdata.data_type import (
+    Axis,
+    DataType,
+)
 
 
 class TestMixedMultiSystemsDumpLoad(
@@ -469,26 +469,24 @@ class TestMixedSystemWithFparamAparam(
         self.f_places = 6
         self.v_places = 6
 
-        new_datatypes=[
+        new_datatypes = [
+            DataType(
+                "fparam",
+                np.ndarray,
+                shape=(Axis.NFRAMES, 2),
+                required=False,
+            ),
+            DataType(
+                "aparam",
+                np.ndarray,
+                shape=(Axis.NFRAMES, Axis.NATOMS, 2),
+                required=False,
+            ),
+        ]
 
-                DataType(
-                    "fparam",
-                    np.ndarray,
-                    shape=(Axis.NFRAMES, 2),
-                    required=False,
-                ),
-                DataType(
-                    "aparam",
-                    np.ndarray,
-                    shape=(Axis.NFRAMES, Axis.NATOMS, 2),
-                    required=False,
-                ),
-            ]
-            
         for datatype in new_datatypes:
             dpdata.System.register_data_type(datatype)
             dpdata.LabeledSystem.register_data_type(datatype)
-
 
         # C1H4
         system_1 = dpdata.LabeledSystem(
