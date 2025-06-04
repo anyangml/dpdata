@@ -465,18 +465,20 @@ class TestMixedSystemWithFparamAparam(unittest.TestCase, CompLabeledSys, IsNoPBC
         system_1 = dpdata.LabeledSystem(
             "gaussian/methane.gaussianlog", fmt="gaussian/log"
         )
-        
+
         tmp_data = system_1.data.copy()
         nframes = tmp_data["coords"].shape[0]
         natoms = tmp_data["atom_types"].shape[0]
-        
+
         tmp_data["fparam"] = np.random.random([nframes, 2])
         tmp_data["aparam"] = np.random.random([nframes, natoms, 3])
 
         self.system_1 = dpdata.LabeledSystem(data=tmp_data)
-        
+
         self.system_1.to("deepmd/npy/mixed", "tmp.deepmd.fparam.aparam")
-        self.system_2 = dpdata.LabeledSystem("tmp.deepmd.fparam.aparam", fmt="deepmd/npy/mixed")
+        self.system_2 = dpdata.LabeledSystem(
+            "tmp.deepmd.fparam.aparam", fmt="deepmd/npy/mixed"
+        )
 
     def tearDown(self):
         if os.path.exists("tmp.deepmd.fparam.aparam"):
@@ -486,14 +488,18 @@ class TestMixedSystemWithFparamAparam(unittest.TestCase, CompLabeledSys, IsNoPBC
         self.assertTrue("fparam" in self.system_1.data)
         self.assertTrue("fparam" in self.system_2.data)
         np.testing.assert_almost_equal(
-            self.system_1.data["fparam"], self.system_2.data["fparam"], decimal=self.places
+            self.system_1.data["fparam"],
+            self.system_2.data["fparam"],
+            decimal=self.places,
         )
 
     def test_aparam_exists(self):
         self.assertTrue("aparam" in self.system_1.data)
         self.assertTrue("aparam" in self.system_2.data)
         np.testing.assert_almost_equal(
-            self.system_1.data["aparam"], self.system_2.data["aparam"], decimal=self.places
+            self.system_1.data["aparam"],
+            self.system_2.data["aparam"],
+            decimal=self.places,
         )
 
 
