@@ -455,53 +455,125 @@ class TestMixedSingleSystemsDump(unittest.TestCase, CompLabeledSys, IsNoPBC):
             shutil.rmtree("tmp.deepmd.mixed.single")
 
 
-class TestMixedSystemWithFparamAparam(unittest.TestCase, CompLabeledSys, IsNoPBC):
+class TestMixedSystemWithFparamAparam(
+    unittest.TestCase, CompLabeledMultiSys, MultiSystems, MSAllIsNoPBC
+):
     def setUp(self):
         self.places = 6
         self.e_places = 6
         self.f_places = 6
         self.v_places = 6
 
+        # C1H4
         system_1 = dpdata.LabeledSystem(
             "gaussian/methane.gaussianlog", fmt="gaussian/log"
         )
 
-        tmp_data = system_1.data.copy()
-        nframes = tmp_data["coords"].shape[0]
-        natoms = tmp_data["atom_types"].shape[0]
-
-        tmp_data["fparam"] = np.random.random([nframes, 2])
-        tmp_data["aparam"] = np.random.random([nframes, natoms, 3])
-
-        self.system_1 = dpdata.LabeledSystem(data=tmp_data)
-
-        self.system_1.to("deepmd/npy/mixed", "tmp.deepmd.fparam.aparam")
-        self.system_2 = dpdata.LabeledSystem(
-            "tmp.deepmd.fparam.aparam", fmt="deepmd/npy/mixed"
+        # C1H3
+        system_2 = dpdata.LabeledSystem(
+            "gaussian/methane_sub.gaussianlog", fmt="gaussian/log"
         )
+
+        tmp_data_1 = system_1.data.copy()
+        nframes_1 = tmp_data_1["coords"].shape[0]
+        natoms_1 = tmp_data_1["atom_types"].shape[0]
+        tmp_data_1["fparam"] = np.random.random([nframes_1, 2])
+        tmp_data_1["aparam"] = np.random.random([nframes_1, natoms_1, 3])
+        system_1_with_params = dpdata.LabeledSystem(data=tmp_data_1)
+
+        tmp_data_2 = system_2.data.copy()
+        nframes_2 = tmp_data_2["coords"].shape[0]
+        natoms_2 = tmp_data_2["atom_types"].shape[0]
+        tmp_data_2["fparam"] = np.random.random([nframes_2, 2])
+        tmp_data_2["aparam"] = np.random.random([nframes_2, natoms_2, 3])
+        system_2_with_params = dpdata.LabeledSystem(data=tmp_data_2)
+        
+        tmp_data_3 = system_1.data.copy()
+        nframes_3 = tmp_data_3["coords"].shape[0]
+        tmp_data_3["atom_numbs"] = [1, 1, 1, 2]
+        tmp_data_3["atom_names"] = ["C", "H", "A", "B"]
+        tmp_data_3["atom_types"] = np.array([0, 1, 2, 3, 3])
+        natoms_3 = len(tmp_data_3["atom_types"])
+        tmp_data_3["fparam"] = np.random.random([nframes_3, 2])
+        tmp_data_3["aparam"] = np.random.random([nframes_3, natoms_3, 3])
+        # C1H1A1B2 with params
+        system_3_with_params = dpdata.LabeledSystem(data=tmp_data_3)
+        
+        self.ms = dpdata.MultiSystems(
+            system_1_with_params, system_2_with_params, system_3_with_params
+        )
+        
+        self.ms.to_deepmd_npy_mixed("tmp.deepmd.fparam.aparam")
+        self.place_holder_ms = dpdata.MultiSystems()
+        self.place_holder_ms.from_deepmd_npy("tmp.deepmd.fparam.aparam", fmt="deepmd/npy")
+        self.systems = dpdata.MultiSystems()
+        self.systems.from_deepmd_npy_mixed("tmp.deepmd.fparam.aparam", fmt="deepmd/npy/mixed")
+        
+        self.ms_1 = self.ms
+        self.ms_2 = self.systems
+        
+        mixed_sets = glob("tmp.deepmd.fparam.aparam/*/set.*")
+        for i in mixed_sets:
+            self.assertEqual(
+                os.path.exists(os.path.join(i, "real_atom_types.npy")), True
+            )
+        
+        self.system_names = [
+            "C1H4A0B0D0",
+            "C1H3A0B0D0",
+            "C1H1A1B2D0"
+        ]
+        self.system_sizes = {
+            "C1H4A0B0D0": 1,
+            "C1H3A0B0D0": 1,
+            "C1H1A1B2D0": 1
+        }
+        self.atom_names = ["C", "H", "A", "B", "D"]
 
     def tearDown(self):
         if os.path.exists("tmp.deepmd.fparam.aparam"):
             shutil.rmtree("tmp.deepmd.fparam.aparam")
+            
+    def test_len(self):
+        self.assertEqual(len(self.ms), 3)
+        self.assertEqual(len(self.systems), 3)
 
-    def test_fparam_exists(self):
-        self.assertTrue("fparam" in self.system_1.data)
-        self.assertTrue("fparam" in self.system_2.data)
-        np.testing.assert_almost_equal(
-            self.system_1.data["fparam"],
-            self.system_2.data["fparam"],
-            decimal=self.places,
+    def test_get_nframes(self):
+        self.assertEqual(self.ms.get_nframes(), 3)
+        self.assertEqual(self.systems.get_nframes(), 3)
+
+    def test_str(self):
+        self.assertEqual(str(self.ms), "MultiSystems (3 systems containing 3 frames)")
+        self.assertEqual(
+            str(self.systems), "MultiSystems (3 systems containing 3 frames)"
         )
+        
+    def test_fparam_exists(self):
+        for formula in self.system_names:
+            if formula in self.ms.systems:
+                self.assertTrue("fparam" in self.ms[formula].data)
+            if formula in self.systems.systems:
+                self.assertTrue("fparam" in self.systems[formula].data)
+                
+        for formula in self.system_names:
+            if formula in self.ms.systems and formula in self.systems.systems:
+                np.testing.assert_almost_equal(
+                    self.ms[formula].data["fparam"],
+                    self.systems[formula].data["fparam"],
+                    decimal=self.places,
+                )
 
     def test_aparam_exists(self):
-        self.assertTrue("aparam" in self.system_1.data)
-        self.assertTrue("aparam" in self.system_2.data)
-        np.testing.assert_almost_equal(
-            self.system_1.data["aparam"],
-            self.system_2.data["aparam"],
-            decimal=self.places,
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+        for formula in self.system_names:
+            if formula in self.ms.systems:
+                self.assertTrue("aparam" in self.ms[formula].data)
+            if formula in self.systems.systems:
+                self.assertTrue("aparam" in self.systems[formula].data)
+                
+        for formula in self.system_names:
+            if formula in self.ms.systems and formula in self.systems.systems:
+                np.testing.assert_almost_equal(
+                    self.ms[formula].data["aparam"],
+                    self.systems[formula].data["aparam"],
+                    decimal=self.places,
+                )
